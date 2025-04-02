@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Human vs AI FPS (Mobile)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; background: #111; }
+    #controls {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 40px;
+    }
+    .btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: #fff;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div class="btn" id="left">◀</div>
+    <div class="btn" id="right">▶</div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const playerGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const playerMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+    const player = new THREE.Mesh(playerGeometry, playerMaterial);
+    scene.add(player);
+    player.position.z = -5;
+
+    const aiGeometry = new THREE.BoxGeometry(1, 1, 1);
+    const aiMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+    const ai = new THREE.Mesh(aiGeometry, aiMaterial);
+    scene.add(ai);
+    ai.position.z = 5;
+
+    let moveLeft = false;
+    let moveRight = false;
+
+    document.getElementById('left').addEventListener('touchstart', () => moveLeft = true);
+    document.getElementById('left').addEventListener('touchend', () => moveLeft = false);
+    document.getElementById('right').addEventListener('touchstart', () => moveRight = true);
+    document.getElementById('right').addEventListener('touchend', () => moveRight = false);
+
+    function moveAI() {
+      if (ai.position.x < player.position.x) ai.position.x += 0.02;
+      else ai.position.x -= 0.02;
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      if (moveLeft) player.position.x -= 0.05;
+      if (moveRight) player.position.x += 0.05;
+
+      moveAI();
+
+      camera.position.z = 0;
+      camera.lookAt(player.position);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
