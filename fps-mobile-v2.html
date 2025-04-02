@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Human vs AI FPS (Full Game)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; overflow: hidden; }
+    canvas { display: block; background: #87CEEB; }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-family: sans-serif;
+      font-size: 16px;
+    }
+    .healthbar {
+      height: 20px;
+      width: 100px;
+      background: red;
+      margin-bottom: 10px;
+    }
+    .inner-bar {
+      height: 100%;
+      background: lime;
+    }
+    #winScreen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      font-family: sans-serif;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div id="ui">
+  Player HP
+  <div class="healthbar"><div id="playerHP" class="inner-bar"></div></div>
+  AI HP
+  <div class="healthbar"><div id="aiHP" class="inner-bar"></div></div>
+</div>
+<div id="winScreen"></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+<script>
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+let renderer = new THREE.WebGLRenderer();
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Ground
+let grassTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg');
+grassTexture.wrapS = grassTexture.wrapT = THREE.RepeatWrapping;
+grassTexture.repeat.set(25, 25);
+let ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(200, 200),
+  new THREE.MeshBasicMaterial({ map: grassTexture })
+);
+ground.rotation.x = -Math.PI / 2;
+scene.add(ground);
+
+// Player variables
+let playerHP = 100;
+let aiHP = 100;
+let gameOver = false;
+
+// AI target
+let ai = new THREE.Mesh(new THREE.BoxGeometry(1, 2, 1), new THREE.MeshBasicMaterial({ color: 0xff0000 }));
+ai.position.set(0, 1, 10);
+scene.add(ai);
+
+// Gunshot sound
+let shotSound = new Audio("https://freesound.org/data/previews/341/341695_6262530-lq.mp3");
+
+// Update UI
+function updateHealthBars() {
+  document.getElementById("playerHP").style.width = playerHP + "%";
+  document.getElementById("aiHP").style.width = aiHP + "%";
+}
+
+function showEndScreen(text) {
+  document.getElementById("winScreen").innerText = text;
+  document.getElementById("winScreen").style.display = "flex";
+}
+
+// Shooting mechanics
+window.addEventListener("touchstart", () => {
+  if (gameOver) return;
+  shotSound.play();
+  let raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  let intersects = raycaster.intersectObject(ai);
+  if (intersects.length > 0) {
+    aiHP -= 30;
+    if (aiHP <= 0) {
+      aiHP = 0;
+      gameOver = true;
+      showEndScreen("You Win!");
+    }
+  }
+  updateHealthBars();
+});
+
+// Simple AI shoot timer
+setInterval(() => {
+  if (gameOver) return;
+  playerHP -= 30;
+  if (playerHP <= 0) {
+    playerHP = 0;
+    gameOver = true;
+    showEndScreen("You Lose!");
+  }
+  updateHealthBars();
+}, 2000);
+
+updateHealthBars();
+
+// Camera/player position
+camera.position.set(0, 1.6, 0);
+camera.lookAt(ai.position);
+
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
